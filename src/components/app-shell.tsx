@@ -4,6 +4,7 @@ import { CalendarDays, Clock, CreditCard, Users } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useReminders } from "@/components/reminders"
+import { Toaster } from "@/components/toaster"
 import { useDeolgi } from "@/components/use-deolgi"
 import { cn } from "cn"
 
@@ -103,6 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </ul>
       </nav>
+      <Toaster />
     </>
   )
 }

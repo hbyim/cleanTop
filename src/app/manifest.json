@@ -1,0 +1,12 @@
+{
+  "name": "덜기",
+  "short_name": "덜기",
+  "description": "이번 주에 줄일 알림, 구독, 약속을 한곳에 모아 두는 주간 정리",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3efe4",
+  "theme_color": "#f3efe4",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

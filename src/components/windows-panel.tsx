@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useSyncExternalStore } from "react"
-import { ConfirmDialog } from "@/components/confirm-dialog"
+import { act } from "@/components/act"
 import { Field } from "@/components/field"
 import { Ready } from "@/components/ready"
 import { Button } from "@/components/ui/button"
@@ -41,7 +41,6 @@ function Editor({ state }: { state: AppState }) {
   const [label, setLabel] = useState("")
   const [time, setTime] = useState("21:00")
   const [error, setError] = useState<string | null>(null)
-  const [confirmFill, setConfirmFill] = useState(false)
   const detected = useSyncExternalStore(
     subscribePermission,
     getPermissionSnapshot,
@@ -143,7 +142,9 @@ function Editor({ state }: { state: AppState }) {
                   <p className="text-sm text-muted-foreground">
                     {item.enabled ? formatKoreanTime(item.time) : "꺼 둠"}
                   </p>
-                  <Button type="button" variant="ghost" onClick={() => removeWindow(item.id)}>
+                  <Button type="button" variant="ghost" onClick={() =>
+                        act(`${item.label} 확인 시간을 지웠습니다.`, () => removeWindow(item.id))
+                      }>
                     삭제
                   </Button>
                 </div>
@@ -178,7 +179,9 @@ function Editor({ state }: { state: AppState }) {
             추가
           </Button>
           {state.windows.length > 0 ? (
-            <Button type="button" variant="outline" className="h-11 px-4" onClick={() => setConfirmFill(true)}>
+            <Button type="button" variant="outline" className="h-11 px-4" onClick={() =>
+                act("아침 8:30, 점심 12:40, 퇴근 전 18:10으로 바꿨습니다.", () => fillSuggestedWindows())
+              }>
               아침 · 점심 · 퇴근 전으로 바꾸기
             </Button>
           ) : null}
@@ -220,14 +223,6 @@ function Editor({ state }: { state: AppState }) {
         ) : null}
       </section>
 
-      <ConfirmDialog
-        open={confirmFill}
-        title="확인 시간을 바꿀까요?"
-        description="지금 시간은 아침 8:30, 점심 12:40, 퇴근 전 18:10으로 바뀝니다."
-        confirmLabel="추천 시간으로 바꾸기"
-        onConfirm={() => fillSuggestedWindows()}
-        onOpenChange={setConfirmFill}
-      />
     </div>
   )
 }
