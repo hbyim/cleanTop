@@ -38,6 +38,7 @@ export function subscribe(listener: () => void): () => void {
 }
 
 export function getSnapshot(): Snapshot {
+  ensureHydrated()
   return snapshot
 }
 
@@ -172,32 +173,37 @@ export function normalizeState(value: unknown): AppState | null {
   }
 }
 
-export function hydrateFromStorage() {
+function ensureHydrated() {
   if (hydrated || typeof window === "undefined") return
   hydrated = true
+  snapshot = readStoredSnapshot()
+}
+
+function readStoredSnapshot(): Snapshot {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) {
-      snapshot = { ready: true, error: null, state: EMPTY_STATE }
-    } else {
-      const parsed: unknown = JSON.parse(raw)
-      const state = normalizeState(parsed)
-      snapshot = state
-        ? { ready: true, error: null, state }
-        : {
-            ready: true,
-            error: "이 브라우저에 저장된 기록을 읽지 못했습니다.",
-            state: EMPTY_STATE,
-          }
+    if (!raw) return { ready: true, error: null, state: EMPTY_STATE }
+    const parsed: unknown = JSON.parse(raw)
+    const state = normalizeState(parsed)
+    if (!state) {
+      return {
+        ready: true,
+        error: "이 브라우저에 저장된 기록을 읽지 못했습니다.",
+        state: EMPTY_STATE,
+      }
     }
+    return { ready: true, error: null, state }
   } catch {
-    snapshot = {
+    return {
       ready: true,
       error: "이 브라우저에 저장된 기록을 읽지 못했습니다.",
       state: EMPTY_STATE,
     }
   }
-  emit()
+}
+
+export function hydrateFromStorage() {
+  ensureHydrated()
 }
 
 export function clearStorage() {
