@@ -1,10 +1,35 @@
 import type { CutRecord, Person, Subscription } from "@/lib/types"
-import { mondayOf } from "@/lib/time"
+import { diffDays, mondayOf, nextBillingDate } from "@/lib/time"
 
 export function monthlyTotal(subscriptions: Subscription[]): number {
   return subscriptions
     .filter((item) => item.status !== "canceled")
     .reduce((sum, item) => sum + item.amount, 0)
+}
+
+export function yearlyTotal(subscriptions: Subscription[]): number {
+  return monthlyTotal(subscriptions) * 12
+}
+
+export type UpcomingBilling = {
+  subscription: Subscription
+  date: string
+  daysLeft: number
+}
+
+export function upcomingBillings(
+  subscriptions: Subscription[],
+  today: string,
+  withinDays = 7,
+): UpcomingBilling[] {
+  return subscriptions
+    .filter((item) => item.status !== "canceled")
+    .map((subscription) => {
+      const date = nextBillingDate(subscription.billingDay, today)
+      return { subscription, date, daysLeft: diffDays(today, date) }
+    })
+    .filter((item) => item.daysLeft <= withinDays)
+    .sort((a, b) => a.daysLeft - b.daysLeft || b.subscription.amount - a.subscription.amount)
 }
 
 export function subscriptionsToReview(subscriptions: Subscription[]): Subscription[] {

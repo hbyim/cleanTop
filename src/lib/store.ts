@@ -32,7 +32,21 @@ let snapshot: Snapshot = SERVER_SNAPSHOT
 let hydrated = false
 const listeners = new Set<() => void>()
 
+let watchingStorage = false
+
+// 다른 탭에서 기록을 바꾸면 이 탭도 같은 기록을 보여 줍니다.
+function watchOtherTabs() {
+  if (watchingStorage || typeof window === "undefined") return
+  watchingStorage = true
+  window.addEventListener("storage", (event) => {
+    if (event.key !== STORAGE_KEY && event.key !== null) return
+    snapshot = readStoredSnapshot()
+    emit()
+  })
+}
+
 export function subscribe(listener: () => void): () => void {
+  watchOtherTabs()
   listeners.add(listener)
   return () => listeners.delete(listener)
 }
@@ -53,9 +67,53 @@ function emit() {
 function commit(state: AppState) {
   snapshot = { ready: true, error: null, state }
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    } catch {
+      // 저장소가 막힌 브라우저에서도 이 탭 안에서는 계속 씁니다.
+    }
   }
   emit()
+}
+
+// 바로 앞의 변경을 되돌리는 함수를 돌려줍니다. 그 사이 다른 변경이 있었으면 되돌리지 않습니다.
+export function withUndo(run: () => void): (() => boolean) | null {
+  const before = readyState()
+  if (!before) return null
+  run()
+  const after = snapshot.state
+  if (after === before) return null
+  return () => {
+    if (snapshot.state !== after) return false
+    commit(before)
+    return true
+  }
+}
+
+const EXPORT_APP = "deolgi"
+
+export function exportBackup(now = new Date()): string | null {
+  const state = readyState()
+  if (!state) return null
+  return JSON.stringify({ app: EXPORT_APP, version: 1, exportedAt: now.toISOString(), state }, null, 2)
+}
+
+export function parseBackup(text: string): AppState | null {
+  try {
+    const parsed: unknown = JSON.parse(text)
+    if (isRecord(parsed) && parsed.app === EXPORT_APP) return normalizeState(parsed.state)
+    return normalizeState(parsed)
+  } catch {
+    return null
+  }
+}
+
+export function importBackup(text: string): ActionResult {
+  if (!snapshot.ready) return { ok: false, reason: "not-ready" }
+  const state = parseBackup(text)
+  if (!state) return { ok: false, reason: "invalid" }
+  commit(state)
+  return { ok: true }
 }
 
 function readyState(): AppState | null {

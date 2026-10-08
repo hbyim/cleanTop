@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { BackupControls } from "@/components/backup-controls"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Ready } from "@/components/ready"
 import { buttonVariants } from "@/components/ui/button"
@@ -12,6 +13,7 @@ import {
   monthlyTotal,
   sortPeople,
   subscriptionsToReview,
+  upcomingBillings,
 } from "@/lib/select"
 import type { AppState } from "@/lib/types"
 import {
@@ -61,6 +63,7 @@ function Board({ state }: { state: AppState }) {
         >
           이 브라우저의 기록 지우기
         </button>
+        <BackupControls blank={blank} />
       </div>
       <ConfirmDialog
         open={confirmExample}
@@ -135,6 +138,7 @@ function Overview({ state, now }: { state: AppState; now: Date | null }) {
   const review = subscriptionsToReview(state.subscriptions)
   const people = sortPeople(state.people).slice(0, 3)
   const total = monthlyTotal(state.subscriptions)
+  const upcoming = today ? upcomingBillings(state.subscriptions, today, 7) : []
 
   return (
     <div className="grid gap-6">
@@ -223,6 +227,26 @@ function Overview({ state, now }: { state: AppState; now: Date | null }) {
           <p className="mt-3 font-heading text-2xl tracking-tight tabular-nums">
             한 달 {formatWon(total)}
           </p>
+          {upcoming.length > 0 && today ? (
+            <div className="mt-3 rounded-xl bg-review px-3 py-2">
+              <h3 className="text-xs font-medium text-review-foreground">7일 안에 결제</h3>
+              <ul className="mt-1 grid gap-1">
+                {upcoming.slice(0, 3).map(({ subscription, date }) => (
+                  <li key={subscription.id} className="flex items-baseline justify-between gap-3 text-sm">
+                    <span>
+                      {subscription.name}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {formatRelativeDay(date, today)}
+                      </span>
+                    </span>
+                    <span className="tabular-nums text-muted-foreground">
+                      {formatWon(subscription.amount)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {state.subscriptions.length === 0 ? (
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               카드 앱의 정기결제만 옮겨 적으면 됩니다.
@@ -233,6 +257,7 @@ function Overview({ state, now }: { state: AppState; now: Date | null }) {
             </p>
           ) : (
             <ul className="mt-3 grid gap-2">
+              <li className="text-xs font-medium text-muted-foreground">살펴볼 구독</li>
               {review.slice(0, 3).map((item) => (
                 <li key={item.id} className="flex items-baseline justify-between gap-3 text-sm">
                   <span>{item.name}</span>

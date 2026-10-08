@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ConfirmDialog } from "@/components/confirm-dialog"
+import { act } from "@/components/act"
 import { controlClass, Field } from "@/components/field"
 import { Ready } from "@/components/ready"
 import { Button } from "@/components/ui/button"
@@ -56,7 +56,6 @@ function Editor({ state }: { state: AppState }) {
   const people = sortPeople(state.people)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   function openCreate() {
     setErrors({})
@@ -97,8 +96,12 @@ function Editor({ state }: { state: AppState }) {
       nextAt: draft.nextAt,
       note: draft.note.trim(),
     }
-    if (draft.id) updatePerson(draft.id, payload)
-    else addPerson({ ...payload, lastMetAt: null })
+    if (draft.id) {
+      const id = draft.id
+      act(`${payload.name} · 저장했습니다.`, () => updatePerson(id, payload))
+    } else {
+      act(`${payload.name} · 추가했습니다.`, () => addPerson({ ...payload, lastMetAt: null }))
+    }
     setDraft(null)
   }
 
@@ -154,16 +157,22 @@ function Editor({ state }: { state: AppState }) {
                   </p>
                 ) : null}
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button type="button" className="h-10 px-3" onClick={() => markPersonMet(person.id)}>
+                  <Button type="button" className="h-10 px-3" onClick={() =>
+                      act(`${person.name} · 오늘 만남을 남겼습니다.`, () => markPersonMet(person.id))
+                    }>
                     만났어요
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => snoozePerson(person.id)}>
+                  <Button type="button" variant="outline" onClick={() =>
+                      act(`${person.name} · 일주일 미뤘습니다.`, () => snoozePerson(person.id))
+                    }>
                     일주일 미루기
                   </Button>
                   <Button type="button" variant="ghost" onClick={() => openEdit(person)}>
                     수정
                   </Button>
-                  <Button type="button" variant="ghost" onClick={() => setDeleteId(person.id)}>
+                  <Button type="button" variant="ghost" onClick={() =>
+                      act(`${person.name} · 목록에서 지웠습니다.`, () => removePerson(person.id))
+                    }>
                     삭제
                   </Button>
                 </div>
@@ -280,15 +289,6 @@ function Editor({ state }: { state: AppState }) {
           </form>
         </DialogContent>
       </Dialog>
-
-      <ConfirmDialog
-        open={deleteId !== null}
-        title="이 사람을 목록에서 지울까요?"
-        description="만남 기록도 함께 지워집니다."
-        confirmLabel="지우기"
-        onConfirm={() => deleteId && removePerson(deleteId)}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-      />
     </div>
   )
 }

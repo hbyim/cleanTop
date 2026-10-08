@@ -154,3 +154,18 @@ export function describeWindows(windows: CheckWindow[], now: Date): WindowStatus
     tomorrow: true,
   }
 }
+
+function daysInMonth(year: number, monthIndex: number): number {
+  return new Date(year, monthIndex + 1, 0).getDate()
+}
+
+// 결제일이 그 달에 없으면(31일 등) 그 달 마지막 날로 봅니다.
+export function nextBillingDate(billingDay: number, today: string): string {
+  const base = parseISODate(today)
+  const year = base.getFullYear()
+  const month = base.getMonth()
+  const thisMonth = new Date(year, month, Math.min(billingDay, daysInMonth(year, month)))
+  if (formatISODate(thisMonth) >= today) return formatISODate(thisMonth)
+  const next = new Date(year, month + 1, Math.min(billingDay, daysInMonth(year, month + 1)))
+  return formatISODate(next)
+}

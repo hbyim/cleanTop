@@ -12,6 +12,7 @@ import { currentCut, pastCuts } from "@/lib/select"
 import { markCutDone, setSubscriptionStatus, setWeeklyCut, undoCutDone } from "@/lib/store"
 import type { AppState } from "@/lib/types"
 import { formatMonthDay } from "@/lib/time"
+import { showToast } from "@/lib/toast"
 import { useNow } from "@/components/use-now"
 import { cn } from "cn"
 
@@ -31,17 +32,17 @@ function Editor({ state }: { state: AppState }) {
   const history = now ? pastCuts(state.cuts, now) : []
   const [title, setTitle] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
   const linked = state.subscriptions.find((item) => item.id === cut?.subscriptionId) ?? null
 
   function choose(input: Parameters<typeof setWeeklyCut>[0]) {
     const result = setWeeklyCut(input)
-    setNotice(
+    showToast(
       result.ok
-        ? "이번 주 끊을 것으로 정해 두었습니다."
+        ? `${input.title} · 이번 주 끊을 것으로 정해 두었습니다.`
         : "이번 주는 이미 하나를 끝냈습니다. 다음 주에 또 고르면 됩니다.",
     )
     if (!result.ok) setError(null)
+    if (result.ok) window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   function chooseCustom() {
@@ -73,10 +74,6 @@ function Editor({ state }: { state: AppState }) {
         </p>
       </header>
 
-      {notice ? (
-        <p className="rounded-xl bg-accent px-3 py-2 text-sm text-accent-foreground">{notice}</p>
-      ) : null}
-
       <section className="rounded-2xl bg-card px-4 py-4 ring-1 ring-foreground/10">
         {!cut ? (
           <p className="text-sm leading-6">아직 고르지 않았습니다. 아래에서 하나를 고르면 됩니다.</p>
@@ -105,7 +102,10 @@ function Editor({ state }: { state: AppState }) {
                 완료 취소
               </Button>
             ) : (
-              <Button type="button" className="h-11 w-fit px-4" onClick={() => markCutDone()}>
+              <Button type="button" className="h-11 w-fit px-4" onClick={() => {
+                  markCutDone()
+                  showToast("이번 주 정리를 끝냈습니다. 수고했어요.")
+                }}>
                 끝냈어요
               </Button>
             )}

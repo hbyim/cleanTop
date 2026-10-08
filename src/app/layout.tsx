@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   },
   description:
     "이번 주에 줄일 알림, 구독, 약속을 한곳에 모아 두는 주간 정리. 기록은 이 브라우저에만 남습니다.",
+  appleWebApp: {
+    capable: true,
+    title: "덜기",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
