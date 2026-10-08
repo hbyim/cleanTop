@@ -15,6 +15,8 @@ npm run dev
 
 개발 서버는 [http://127.0.0.1:47231](http://127.0.0.1:47231) 에서 열립니다.
 
+공개 주소는 [https://hbyim.github.io/cleanTop/](https://hbyim.github.io/cleanTop/) 입니다. `main`에 올리면 GitHub Actions가 정적 파일을 만들어 Pages에 배포합니다.
+
 ```bash
 npm test
 npm run lint
